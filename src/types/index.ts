@@ -24,7 +24,7 @@ export interface PlatanadaTemporada {
   id: string;
   nombre: string;
   descripcion: string;
-  ingredientes_json: string[];
+  ingredientes_json: string[]; // ["p_carne_res","p_chorizo_asado","s_frijol",..]
   conteo: number;
 }
 

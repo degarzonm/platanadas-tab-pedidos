@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 import client from '../api/client';
 import { useOrderStore } from '../store/useOrderStore';
@@ -8,8 +8,8 @@ import { useAuthStore } from '../store/useAuthStore';
 export const LoginScreen = () => {
   const { setDatosDia } = useOrderStore();
   const { login } = useAuthStore();
-  
-  const [sucursalId, setSucursalId] = useState('bosque_popular'); 
+
+  const [sucursalId, setSucursalId] = useState('bosque_popular');
   const [password, setPassword] = useState('pl4t4n4d4s');
   const [loading, setLoading] = useState(false);
 
@@ -37,9 +37,9 @@ export const LoginScreen = () => {
 
       // 3. Guardar en Stores
       const { ingredientes, platanadas_temporadas } = datosRes.data;
-      
+
       setDatosDia(ingredientes, platanadas_temporadas);
-      
+
       // Esto activará la navegación automática en AppNavigator
       login(token, sucursalId);
 
@@ -55,36 +55,36 @@ export const LoginScreen = () => {
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.logoContainer}>
-             <Text style={{fontSize: 50}}>🍌</Text>
-             <Text style={styles.title}>Platanadas POS</Text>
+          <Image source={require('../../assets/icon.png')} style={{ width: 50, height: 50 }} />
+          <Text style={styles.title}>Platanadas POS</Text>
         </View>
 
         <View style={styles.form}>
           <Text style={styles.label}>ID Sucursal</Text>
-          <TextInput 
-            style={styles.input} 
-            value={sucursalId} 
+          <TextInput
+            style={styles.input}
+            value={sucursalId}
             onChangeText={setSucursalId}
             autoCapitalize="none"
           />
 
           <Text style={styles.label}>Contraseña</Text>
-          <TextInput 
-            style={styles.input} 
-            value={password} 
+          <TextInput
+            style={styles.input}
+            value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
-          <TouchableOpacity 
-            style={styles.button} 
+          <TouchableOpacity
+            style={styles.button}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
-                <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#fff" />
             ) : (
-                <Text style={styles.btnText}>Iniciar Turno</Text>
+              <Text style={styles.btnText}>Iniciar Turno</Text>
             )}
           </TouchableOpacity>
         </View>
