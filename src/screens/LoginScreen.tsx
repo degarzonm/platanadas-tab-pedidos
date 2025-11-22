@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, useWindowDimensions } from 'react-native';
 import { COLORS, SHADOWS } from '../constants/theme';
 import client from '../api/client';
 import { useOrderStore } from '../store/useOrderStore';
@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/useAuthStore';
 export const LoginScreen = () => {
   const { setDatosDia } = useOrderStore();
   const { login } = useAuthStore();
+  const { width } = useWindowDimensions(); // Hook para responsividad
 
   const [sucursalId, setSucursalId] = useState('bosque_popular');
   const [password, setPassword] = useState('pl4t4n4d4s');
@@ -22,7 +23,6 @@ export const LoginScreen = () => {
     setLoading(true);
 
     try {
-      // 1. Login
       const loginRes = await client.post('/login-sucursal', {
         id: sucursalId,
         pass: password
@@ -30,17 +30,12 @@ export const LoginScreen = () => {
 
       const { token } = loginRes.data;
 
-      // 2. Descargar Datos
       const datosRes = await client.get('/sucursal/datos-dia', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // 3. Guardar en Stores
       const { ingredientes, platanadas_temporadas } = datosRes.data;
-
       setDatosDia(ingredientes, platanadas_temporadas);
-
-      // Esto activará la navegación automática en AppNavigator
       login(token, sucursalId);
 
     } catch (error) {
@@ -53,7 +48,8 @@ export const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      {/* Ajuste de ancho responsive: 90% en móvil, max 400px en tablet */}
+      <View style={[styles.card, { width: width > 450 ? 400 : '90%' }]}>
         <View style={styles.logoContainer}>
           <Image source={require('../../assets/icon.png')} style={{ width: 50, height: 50 }} />
           <Text style={styles.title}>Platanadas POS</Text>
@@ -102,9 +98,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.cream,
-    padding: 40,
+    padding: 30, // Reducido un poco para móviles pequeños
     borderRadius: 20,
-    width: 400,
     alignItems: 'center',
     ...SHADOWS.card,
   },
@@ -132,7 +127,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.verdePinton,
     borderRadius: 10,
-    padding: 15,
+    padding: 12, // Ajustado
     marginBottom: 20,
     fontSize: 16,
   },

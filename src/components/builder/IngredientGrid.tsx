@@ -1,15 +1,19 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
 import { COLORS, SHADOWS } from '../../constants/theme';
 import { useOrderStore } from '../../store/useOrderStore';
 import { IngredienteVenta } from '../../types';
 
-// Calculamos el ancho de columna para que se vea bien en iPad
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const NUM_COLUMNS = 4;
-
 export const IngredientGrid = () => {
+  const { width } = useWindowDimensions();
   const { menuIngredientes, activeCategory, currentOrder, currentPlatanadaIndex, updateIngredient } = useOrderStore();
+
+  // Lógica de Columnas Dinámicas
+  const isMobile = width < 768;
+  const NUM_COLUMNS = isMobile ? 2 : 4;
+  
+  // Ajuste fino del ancho de tarjeta
+  const cardWidthPercent = isMobile ? '47%' : '23%'; 
 
   const filteredData = menuIngredientes.filter(i => i.tipo === activeCategory);
 
@@ -20,13 +24,12 @@ export const IngredientGrid = () => {
 
   const renderItem = ({ item }: { item: IngredienteVenta }) => {
     const qty = getQty(item.id);
-    // Aseguramos protocolo https
     const imgUrl = item.link_icon?.startsWith('http') ? item.link_icon : `https://${item.link_icon}`;
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { maxWidth: cardWidthPercent }]}>
         <Text style={styles.name} numberOfLines={2}>{item.nombre}</Text>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.price} numberOfLines={1}>
           $ {item.precio_porcion < 1000 ? item.precio_porcion : item.precio_porcion / 1000 + " K"}
         </Text>
         <View style={styles.imageContainer}>
@@ -62,6 +65,7 @@ export const IngredientGrid = () => {
   return (
     <View style={styles.container}>
       <FlatList
+        key={NUM_COLUMNS}
         data={filteredData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
@@ -77,39 +81,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.creamAlt,
-    padding: 15,
+    padding: 10, // Padding reducido para móviles
   },
   listContent: {
     paddingBottom: 20,
   },
   row: {
-    justifyContent: 'flex-start',
-    gap: 15,
-    marginBottom: 15,
+    justifyContent: 'flex-start', // Mejor flex-start con gap para control total
+    gap: 10, // Gap nativo de Flexbox
+    marginBottom: 10,
   },
   card: {
     flex: 1,
-    maxWidth: '23%', // Ajuste para 4 columnas
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 10,
+    padding: 8,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: COLORS.verdePinton,
     ...SHADOWS.card,
-    minHeight: 200, // Altura mínima para acomodar imagen grande
+    minHeight: 180, 
   },
   name: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.salsaBrown,
     textAlign: 'center',
-    height: 35,
+    height: 30,
+    marginBottom: 2,
+  },
+  price: {
+    fontSize: 12,
+    color: COLORS.salsa,
     marginBottom: 5,
   },
   imageContainer: {
     width: '100%',
-    height: 120, // Altura dinámica visual, la imagen se ajustará con contain
+    height: 80, 
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -121,13 +129,13 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 'auto', // Empuja los controles al fondo
+    gap: 8,
+    marginTop: 'auto',
   },
   btn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: COLORS.banana,
     justifyContent: 'center',
     alignItems: 'center',
@@ -140,15 +148,15 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
     color: COLORS.salsa,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   qty: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.salsa,
-    minWidth: 24,
+    minWidth: 20,
     textAlign: 'center',
   },
 });

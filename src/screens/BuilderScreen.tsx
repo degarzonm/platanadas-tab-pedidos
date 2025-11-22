@@ -9,7 +9,7 @@ import { COLORS } from '../constants/theme';
 export const BuilderScreen = () => {
   const { currentOrder, currentPlatanadaIndex, selectPlatanadaTab } = useOrderStore();
   const { width } = useWindowDimensions();
-  const isTablet = width > 768;
+  const isMobile = width < 768; // Breakpoint Tablet Landscape común
 
   if (!currentOrder) return null;
 
@@ -38,18 +38,21 @@ export const BuilderScreen = () => {
       </View>
 
       {/* Layout Responsivo */}
-      <View style={[styles.body, !isTablet && styles.bodyMobile]}>
-        {/* En Tablet: Sidebar izquierda. En Móvil: Barra superior horizontal (necesitaremos ajustar el componente Sidebar internamente o aquí envolverlo) */}
-        <View style={isTablet ? styles.leftPanel : styles.topPanelMobile}>
-          <CategorySidebar isMobile={!isTablet} />
+      {/* En móvil usa 'column' (vertical), en tablet 'row' (horizontal) */}
+      <View style={[styles.body, isMobile && styles.bodyMobile]}>
+        
+        {/* Panel Categorías: Izquierda en Tablet, Arriba en Móvil */}
+        <View style={isMobile ? styles.topPanelMobile : styles.leftPanel}>
+          <CategorySidebar isMobile={isMobile} />
         </View>
 
         <View style={styles.centerPanel}>
           <IngredientGrid />
         </View>
 
-        <View style={isTablet ? styles.rightPanel : styles.bottomPanelMobile}>
-          <RightPanel isMobile={!isTablet} />
+        {/* Panel Acciones: Derecha en Tablet, Abajo en Móvil */}
+        <View style={isMobile ? styles.bottomPanelMobile : styles.rightPanel}>
+          <RightPanel isMobile={isMobile} />
         </View>
       </View>
     </SafeAreaView>
@@ -72,12 +75,13 @@ const styles = StyleSheet.create({
   body: { flex: 1, flexDirection: 'row' },
   bodyMobile: { flexDirection: 'column' },
 
-  // Areas
+  // Areas Tablet
   leftPanel: { width: 90, zIndex: 1 },
-  topPanelMobile: { height: 80, width: '100%', zIndex: 1 }, // Barra horizontal categorías
+  rightPanel: { width: 100, zIndex: 1 },
+  
+  // Areas Mobile
+  topPanelMobile: { height: 85, width: '100%', zIndex: 1 }, 
+  bottomPanelMobile: { height: 80, width: '100%', zIndex: 1 },
 
   centerPanel: { flex: 1 },
-
-  rightPanel: { width: 100, zIndex: 1 },
-  bottomPanelMobile: { height: 80, width: '100%', zIndex: 1 }, // Barra horizontal acciones
 });

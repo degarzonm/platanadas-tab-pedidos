@@ -25,8 +25,8 @@ export const COLORS = {
 };
 
 export const FONTS = {
-  regular: 'System', // Podríamos cargar Fredoka o Poppins más adelante
-  bold: 'System',
+  regular: 'Fredoka-Regular', 
+  bold: 'Fredoka-Bold',
 };
 
 export const SHADOWS = {
