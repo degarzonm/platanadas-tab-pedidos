@@ -23,6 +23,7 @@ export const LoginScreen = () => {
     setLoading(true);
 
     try {
+      // 1. Login (Sin token, público)
       const loginRes = await client.post('/login-sucursal', {
         id: sucursalId,
         pass: password
@@ -30,13 +31,18 @@ export const LoginScreen = () => {
 
       const { token } = loginRes.data;
 
+      // 2. Guardar en Store
+      login(token, sucursalId); 
+      // NOTA: login() actualiza el estado en memoria inmediatamente, 
+      // así que el interceptor *debería* verlo.
+      // Pero por seguridad absoluta en el "handshake" inicial, pasamos explícito aquí:
+
       const datosRes = await client.get('/sucursal/datos-dia', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` } // Excepción aceptable solo aquí
       });
 
       const { ingredientes, platanadas_temporadas } = datosRes.data;
       setDatosDia(ingredientes, platanadas_temporadas);
-      login(token, sucursalId);
 
     } catch (error) {
       console.error(error);

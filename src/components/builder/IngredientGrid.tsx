@@ -1,14 +1,82 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import { COLORS, SHADOWS } from '../../constants/theme';
 import { useOrderStore } from '../../store/useOrderStore';
 import { IngredienteVenta } from '../../types';
+
+type IngredientCardProps = {
+  item: IngredienteVenta;
+  qty: number;
+  cardWidthPercent: string;
+  imgUrl: string;
+  onIncrement: () => void;
+  onDecrement: () => void;
+};
+
+const IngredientCard: React.FC<IngredientCardProps> = ({
+  item,
+  qty,
+  cardWidthPercent,
+  imgUrl,
+  onIncrement,
+  onDecrement,
+}) => {
+  const backgroundAnim = React.useRef(new Animated.Value(qty > 0 ? 1 : 0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(backgroundAnim, {
+      toValue: qty > 0 ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [qty, backgroundAnim]);
+
+  const backgroundColor = backgroundAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#fff', COLORS.verdePinton],
+  });
+
+  return (
+    <Animated.View style={[styles.card, { maxWidth: cardWidthPercent, backgroundColor }]}>
+      <Text style={styles.name} numberOfLines={2}>{item.nombre}</Text>
+      <Text style={styles.price} numberOfLines={1}>
+        $ {item.precio_porcion < 1000 ? item.precio_porcion : item.precio_porcion / 1000 + " K"}
+      </Text>
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imgUrl }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View style={styles.controls}>
+        <TouchableOpacity
+          onPress={onDecrement}
+          style={[styles.btn, qty === 0 && styles.btnDisabled]}
+          disabled={qty === 0}
+        >
+          <Text style={styles.btnText}>-</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.qty}>{qty}</Text>
+
+        <TouchableOpacity
+          onPress={onIncrement}
+          style={styles.btn}
+        >
+          <Text style={styles.btnText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+};
 
 export const IngredientGrid = () => {
   const { width } = useWindowDimensions();
   const { menuIngredientes, activeCategory, currentOrder, currentPlatanadaIndex, updateIngredient } = useOrderStore();
 
-  // Lógica de Columnas Dinámicas
+  // L��gica de Columnas Dinǭmicas
   const isMobile = width < 768;
   const NUM_COLUMNS = isMobile ? 2 : 4;
   
@@ -27,38 +95,14 @@ export const IngredientGrid = () => {
     const imgUrl = item.link_icon?.startsWith('http') ? item.link_icon : `https://${item.link_icon}`;
 
     return (
-      <View style={[styles.card, { maxWidth: cardWidthPercent }]}>
-        <Text style={styles.name} numberOfLines={2}>{item.nombre}</Text>
-        <Text style={styles.price} numberOfLines={1}>
-          $ {item.precio_porcion < 1000 ? item.precio_porcion : item.precio_porcion / 1000 + " K"}
-        </Text>
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: imgUrl }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.controls}>
-          <TouchableOpacity
-            onPress={() => updateIngredient(item.id, -1)}
-            style={[styles.btn, qty === 0 && styles.btnDisabled]}
-            disabled={qty === 0}
-          >
-            <Text style={styles.btnText}>−</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.qty}>{qty}</Text>
-
-          <TouchableOpacity
-            onPress={() => updateIngredient(item.id, 1)}
-            style={styles.btn}
-          >
-            <Text style={styles.btnText}>+</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <IngredientCard
+        item={item}
+        qty={qty}
+        cardWidthPercent={cardWidthPercent}
+        imgUrl={imgUrl}
+        onDecrement={() => updateIngredient(item.id, -1)}
+        onIncrement={() => updateIngredient(item.id, 1)}
+      />
     );
   };
 
@@ -81,7 +125,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.creamAlt,
-    padding: 10, // Padding reducido para móviles
+    padding: 10, // Padding reducido para m��viles
   },
   listContent: {
     paddingBottom: 20,

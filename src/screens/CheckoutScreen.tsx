@@ -18,7 +18,6 @@ const PAYMENT_METHODS = [
 ];
 
 export const CheckoutScreen = () => {
-  const { token } = useAuthStore();
   const navigation = useNavigation<any>();
   const { currentOrder, menuIngredientes, getOrderTotal, clearCurrentOrder, addToHistory } = useOrderStore();
   
@@ -65,9 +64,7 @@ export const CheckoutScreen = () => {
         t_creacion: currentOrder.t_creacion
       };
 
-      const response = await client.post(ENDPOINTS.NUEVO_PEDIDO, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await client.post(ENDPOINTS.NUEVO_PEDIDO, payload);
 
       if (response.data && response.data.id) {
         pedidoLocalFinal.id = response.data.id;

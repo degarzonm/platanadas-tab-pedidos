@@ -29,7 +29,7 @@ export interface PlatanadaTemporada {
 }
 
 export interface PedidoLocal {
-  id?: string; // Puede ser null si aun no se ha enviado
+  id?: string; // Puede ser null si aun no se ha enviado desde local
   sucursal_id: string;
   comensal: string; // Alias
   items: PlatanadaLocal[];
@@ -37,10 +37,39 @@ export interface PedidoLocal {
   estado: 'creado' | 'en_preparacion' | 'finalizado' | 'cancelado';
   modo_pago: 'efectivo' | 'tarjeta' | 'billeteras' | 'pendiente';
   t_creacion: string;
+  t_modificacion?: string;
+  t_entrega?: string;
 }
 
 export interface DatosDiaResponse {
   ingredientes: IngredienteVenta[];
   platanadas_temporadas: PlatanadaTemporada[]; // ahora tipado correctamente
   historial_pedidos: PedidoLocal[]; // O la estructura que retorne el backend
+}
+
+export type SyncStatus = 'ok' | 'updated' | 'created' | 'no-local';
+
+export interface BackendPedido {
+  id: string;
+  sucursal_id: string;
+  comensal: string;
+  productos_json: string[]; // ["ing1,ing2", "ing1,ing3"]
+  total: number | string; // El backend manda string "12400.00" o number
+  descuento: number | string;
+  estado: string;
+  estado_pago: string;
+  modo_pago: string;
+  t_creacion: string;
+  t_modificacion?: string;
+  t_entrega?: string;
+}
+
+export interface PedidoSyncResult {
+  id: string;
+  status: SyncStatus;
+  data?: BackendPedido; // Viene si es created, updated o no-local
+}
+
+export interface SyncPayload {
+  pedidos: Partial<BackendPedido>[]; // Lo que enviamos
 }

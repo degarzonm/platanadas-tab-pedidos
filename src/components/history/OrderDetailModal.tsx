@@ -18,7 +18,6 @@ import { PedidoLocal } from '../../types';
 import client from '../../api/client';
 import { ENDPOINTS } from '../../api/endpoints';
 import { useOrderStore } from '../../store/useOrderStore';
-import { useAuthStore } from '../../store/useAuthStore';
 import { formatItemsForBackend } from '../../utils/formatters';
 
 interface Props {
@@ -30,7 +29,7 @@ interface Props {
 
 export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: Props) => {
   const { menuIngredientes, finalizeOrderInHistory, cancelOrderInHistory, syncPedido } = useOrderStore();
-  const { token } = useAuthStore();
+  
   
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelInput, setShowCancelInput] = useState(false);
@@ -47,6 +46,7 @@ export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: P
   // =================
   const handleFinalize = async () => {
     setLoading(true);
+    const tiempo_m = new Date().toISOString()
     try {
       let remoteId = pedido.id;
 
@@ -62,23 +62,25 @@ export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: P
             estado: "finalizado", 
             estado_pago: pedido.modo_pago === 'efectivo' ? 'pendiente' : 'pagado',
             modo_pago: pedido.modo_pago,
-            t_creacion: pedido.t_creacion
+            t_creacion: pedido.t_creacion,
+            t_modificacion: tiempo_m,
+            t_entrega: tiempo_m,
         };
 
-        const resCreate = await client.post(ENDPOINTS.NUEVO_PEDIDO, payloadCreate, {
-             headers: { Authorization: `Bearer ${token}` }
-        });
+        const resCreate = await client.post(ENDPOINTS.NUEVO_PEDIDO, payloadCreate);
 
-        if (resCreate.data && resCreate.data.id) {
+         if (resCreate.data && resCreate.data.id) {
             remoteId = resCreate.data.id;
             syncPedido(pedido.t_creacion, remoteId);
-        }
+         }
       } else {
         await client.post(ENDPOINTS.ACTUALIZA_PEDIDO, {
             id: remoteId, 
             estado: 'finalizado',
-            estado_pago: 'pagado' 
-         }, { headers: { Authorization: `Bearer ${token}` }});
+            estado_pago: 'pagado',
+            t_modificacion: tiempo_m,
+            t_entrega: tiempo_m,
+         });
       }
       
       finalizeOrderInHistory(indexInHistory);
@@ -104,7 +106,7 @@ export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: P
       return;
     }
     setLoading(true);
-    
+    const tiempo_m = new Date().toISOString()
     try {
       let remoteId = pedido.id;
 
@@ -118,12 +120,12 @@ export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: P
             descuento: "0",
             estado: "creado", 
             modo_pago: pedido.modo_pago,
-            t_creacion: pedido.t_creacion
+            t_creacion: pedido.t_creacion,
+            t_modificacion: tiempo_m,
+
         };
 
-        const resCreate = await client.post(ENDPOINTS.NUEVO_PEDIDO, payloadCreate, {
-             headers: { Authorization: `Bearer ${token}` }
-        });
+        const resCreate = await client.post(ENDPOINTS.NUEVO_PEDIDO, payloadCreate);
 
         if (resCreate.data && resCreate.data.id) {
             remoteId = resCreate.data.id;
@@ -134,8 +136,9 @@ export const OrderDetailModal = ({ visible, onClose, pedido, indexInHistory }: P
       if (remoteId) {
           await client.post(ENDPOINTS.CANCELAR_PEDIDO, {
             id: remoteId,
-            razon: cancelReason
-        }, { headers: { Authorization: `Bearer ${token}` }});
+            razon: cancelReason,
+            t_modificacion: tiempo_m,
+          });
       }
 
       cancelOrderInHistory(indexInHistory);
