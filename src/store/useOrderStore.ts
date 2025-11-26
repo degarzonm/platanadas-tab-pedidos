@@ -168,7 +168,39 @@ export const useOrderStore = create<OrderState>()(
         const items = [...state.currentOrder.items];
         const idx = state.currentPlatanadaIndex;
 
+        const ingMeta = state.menuIngredientes.find(i => i.id === ingId);
+        if (!ingMeta) return {};
+
+        const getCountByType = (tipo: string) =>
+          Object.entries(items[idx].ingredientes).reduce((sum, [id, qty]) => {
+            const meta = state.menuIngredientes.find(i => i.id === id);
+            return meta?.tipo?.toLowerCase() === tipo ? sum + qty : sum;
+          }, 0);
+
         const currentQty = items[idx].ingredientes[ingId] || 0;
+
+        if (delta > 0) {
+          const tipo = (ingMeta.tipo || '').toLowerCase();
+          if (tipo === 'base') {
+            const baseCount = getCountByType('base');
+            const alreadyHasBase = baseCount >= 1;
+            const hasThisBase = currentQty > 0;
+            if (alreadyHasBase && !hasThisBase) return {};
+            if (hasThisBase) return {};
+          }
+          const limits: Record<string, number> = {
+            proteina: 3,
+            salsa: 3,
+            topping: 4,
+            bebida: 5,
+          };
+          const limit = limits[tipo];
+          if (limit !== undefined) {
+            const count = getCountByType(tipo);
+            if (count >= limit) return {};
+          }
+        }
+
         const newQty = Math.max(0, currentQty + delta);
 
         items[idx].ingredientes[ingId] = newQty;

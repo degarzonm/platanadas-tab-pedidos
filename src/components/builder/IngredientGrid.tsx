@@ -11,6 +11,7 @@ type IngredientCardProps = {
   imgUrl: string;
   onIncrement: () => void;
   onDecrement: () => void;
+  disablePlus: boolean;
 };
 
 const IngredientCard: React.FC<IngredientCardProps> = ({
@@ -20,6 +21,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
   imgUrl,
   onIncrement,
   onDecrement,
+  disablePlus,
 }) => {
   const backgroundAnim = React.useRef(new Animated.Value(qty > 0 ? 1 : 0)).current;
 
@@ -40,7 +42,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
     <Animated.View style={[styles.card, { maxWidth: cardWidthPercent, backgroundColor }]}>
       <Text style={styles.name} numberOfLines={2}>{item.nombre}</Text>
       <Text style={styles.price} numberOfLines={1}>
-        $ {item.precio_porcion < 1000 ? item.precio_porcion : item.precio_porcion / 1000 + " K"}
+        $ {item.precio_porcion < 1000 ? item.precio_porcion : item.precio_porcion / 1000 + ' K'}
       </Text>
       <View style={styles.imageContainer}>
         <Image
@@ -63,7 +65,8 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
 
         <TouchableOpacity
           onPress={onIncrement}
-          style={styles.btn}
+          style={[styles.btn, disablePlus && styles.btnDisabled]}
+          disabled={disablePlus}
         >
           <Text style={styles.btnText}>+</Text>
         </TouchableOpacity>
@@ -76,7 +79,7 @@ export const IngredientGrid = () => {
   const { width } = useWindowDimensions();
   const { menuIngredientes, activeCategory, currentOrder, currentPlatanadaIndex, updateIngredient } = useOrderStore();
 
-  // L��gica de Columnas Dinǭmicas
+  // Logica de Columnas Dinamicas
   const isMobile = width < 768;
   const NUM_COLUMNS = isMobile ? 2 : 4;
   
@@ -90,9 +93,35 @@ export const IngredientGrid = () => {
     return currentOrder.items[currentPlatanadaIndex].ingredientes[id] || 0;
   };
 
+  const getCountByType = (tipo: string) => {
+    if (!currentOrder || !currentOrder.items[currentPlatanadaIndex]) return 0;
+    return Object.entries(currentOrder.items[currentPlatanadaIndex].ingredientes).reduce((sum, [id, qty]) => {
+      const meta = menuIngredientes.find(i => i.id === id);
+      return meta?.tipo?.toLowerCase() === tipo ? sum + qty : sum;
+    }, 0);
+  };
+
+  const isIncrementDisabled = (item: IngredienteVenta, qty: number) => {
+    if (!currentOrder || !currentOrder.items[currentPlatanadaIndex]) return false;
+    const tipo = (item.tipo || '').toLowerCase();
+
+    if (tipo === 'base') {
+      const baseCount = getCountByType('base');
+      const hasThisBase = qty > 0;
+      if (hasThisBase) return true;
+      return baseCount >= 1;
+    }
+
+    const limits: Record<string, number> = { proteina: 3, salsa: 3, topping: 4, bebida: 5 };
+    const limit = limits[tipo];
+    if (limit === undefined) return false;
+    return getCountByType(tipo) >= limit;
+  };
+
   const renderItem = ({ item }: { item: IngredienteVenta }) => {
     const qty = getQty(item.id);
     const imgUrl = item.link_icon?.startsWith('http') ? item.link_icon : `https://${item.link_icon}`;
+    const disablePlus = isIncrementDisabled(item, qty);
 
     return (
       <IngredientCard
@@ -100,8 +129,9 @@ export const IngredientGrid = () => {
         qty={qty}
         cardWidthPercent={cardWidthPercent}
         imgUrl={imgUrl}
+        disablePlus={disablePlus}
         onDecrement={() => updateIngredient(item.id, -1)}
-        onIncrement={() => updateIngredient(item.id, 1)}
+        onIncrement={() => updateIngredient(item.id, disablePlus ? 0 : 1)}
       />
     );
   };
@@ -125,7 +155,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.creamAlt,
-    padding: 10, // Padding reducido para m��viles
+    padding: 10, // Padding reducido para moviles
   },
   listContent: {
     paddingBottom: 20,
